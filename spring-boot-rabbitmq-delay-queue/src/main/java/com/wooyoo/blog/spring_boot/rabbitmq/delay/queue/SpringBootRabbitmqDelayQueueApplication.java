@@ -2,7 +2,9 @@ package com.wooyoo.blog.spring_boot.rabbitmq.delay.queue;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
@@ -16,6 +18,16 @@ public class SpringBootRabbitmqDelayQueueApplication {
 
     final static String queueName = "test1";
 
+    /**
+     * 发送到该队列的job会在一段时间后过期进入到delay_process_queue
+     */
+    final static String delayQueueName = "delay_queue";
+
+    /**
+     * 进入到该队列的任务会被消费
+     */
+    final static String delayProcessQueueName = "delay_process_queue";
+
     @Bean
     Queue queue() {
         return new Queue(queueName, false);
@@ -24,6 +36,32 @@ public class SpringBootRabbitmqDelayQueueApplication {
     @Bean
     TopicExchange exchange() {
         return new TopicExchange("spring-boot-exchange");
+    }
+
+    @Bean
+    DirectExchange delayExchange() {
+        return new DirectExchange("delay_exchange");
+    }
+
+    @Bean
+    Queue delayQueue() {
+        return QueueBuilder.durable(delayQueueName)
+                           .withArgument("x-dead-letter-routing-exchange", "delay_exchange")
+                           .withArgument("x-dead-letter-routing-key", "delay_process_queue")
+                           .build();
+    }
+
+    @Bean
+    Queue delayProcessQueue() {
+        return QueueBuilder.durable(delayProcessQueueName)
+                           .build();
+    }
+
+    @Bean
+    Binding newBinding(Queue delayProcessQueue, DirectExchange delayExchange) {
+        return BindingBuilder.bind(delayProcessQueue)
+                             .to(delayExchange)
+                             .with("delay_process_queue");
     }
 
     @Bean
