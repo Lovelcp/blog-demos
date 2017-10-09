@@ -2,25 +2,19 @@ package com.wooyoo.blog.spring_boot.rabbitmq.delay.queue;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Runner implements CommandLineRunner {
     private final RabbitTemplate rabbitTemplate;
-    private final Receiver receiver;
-    private final ConfigurableApplicationContext context;
+    private static final int EXPIRATION = 4000;
 
-    public Runner(Receiver receiver, RabbitTemplate rabbitTemplate, ConfigurableApplicationContext context) {
-        this.receiver = receiver;
+    public Runner(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
-        this.context = context;
     }
 
     public void run(String... args) throws Exception {
         System.out.println("Sending message...");
-        //        rabbitTemplate.convertAndSend(SpringBootRabbitmqDelayQueueApplication.queueName, (Object) "Hello from RabbitMQ!",
-        //                new ExpirationMessagePostProcessor(4));
-        rabbitTemplate.convertAndSend(SpringBootRabbitmqDelayQueueApplication.queueName, "Hello from RabbitMQ!");
+        rabbitTemplate.convertAndSend(QueueConfig.delayQueueName, (Object) "Hello from RabbitMQ!", new ExpirationMessagePostProcessor(EXPIRATION));
     }
 }
