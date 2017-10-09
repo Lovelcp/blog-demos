@@ -19,6 +19,8 @@ public class Runner implements CommandLineRunner {
 
     public void run(String... args) throws Exception {
         System.out.println("Sending message...");
+        //        rabbitTemplate.convertAndSend(SpringBootRabbitmqDelayQueueApplication.queueName, (Object) "Hello from RabbitMQ!",
+        //                new ExpirationMessagePostProcessor(4));
         rabbitTemplate.convertAndSend(SpringBootRabbitmqDelayQueueApplication.queueName, "Hello from RabbitMQ!");
     }
 }
