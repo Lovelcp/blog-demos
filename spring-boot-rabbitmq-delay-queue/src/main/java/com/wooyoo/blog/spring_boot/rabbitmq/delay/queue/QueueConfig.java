@@ -27,9 +27,14 @@ public class QueueConfig {
     final static int QUEUE_EXPIRATION = 4000;
 
     /**
-     * 发送到该队列的message会被consumer拒绝，且不会被requeue，因为requeue被设置为false
+     * 发送到该队列的message会被consumer拒绝，且不会被requeue，因为requeue被设置为false。被拒绝后会进入delay_process_queue
      */
     final static String DELAY_QUEUE_REJECT_NAME = "delay_queue_reject";
+
+    /**
+     * 发送到该队列的message个数超过队列的最大长度之后，新的message会进入到delay_process_queue
+     */
+    final static String DELAY_QUEUE_MAX_LENGTH_NAME = "delay_queue_max_length";
 
     /**
      * message失效后进入到的队列
@@ -65,6 +70,15 @@ public class QueueConfig {
         return QueueBuilder.durable(DELAY_QUEUE_REJECT_NAME)
                            .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
+                           .build();
+    }
+
+    @Bean
+    Queue delayQueueMaxLength() {
+        return QueueBuilder.durable(DELAY_QUEUE_MAX_LENGTH_NAME)
+                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
+                           .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
+                           .withArgument("x-max-length", 3)
                            .build();
     }
 

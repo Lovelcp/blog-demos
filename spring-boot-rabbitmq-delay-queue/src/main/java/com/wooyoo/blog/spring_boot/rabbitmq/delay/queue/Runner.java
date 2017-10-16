@@ -13,9 +13,10 @@ public class Runner implements CommandLineRunner {
     }
 
     public void run(String... args) throws Exception {
-        testDelayQueuePerMessage();
-        testDelayQueuePerQueue();
-        testDelayQueueReject();
+        //        testDelayQueuePerMessage();
+        //        testDelayQueuePerQueue();
+        //        testDelayQueueReject();
+        testDelayQueueMaxLength();
     }
 
     public void testDelayQueuePerMessage() {
@@ -38,8 +39,14 @@ public class Runner implements CommandLineRunner {
     public void testDelayQueueReject() {
         System.out.println("Sending message to delay_queue_reject...");
         for (int i = 1; i < 4; i++) {
-            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_REJECT_NAME,
-                    "Message From delay_queue_reject");
+            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_REJECT_NAME, "Message From delay_queue_reject");
+        }
+    }
+
+    public void testDelayQueueMaxLength() {
+        System.out.println("Sending message to delay_queue_max_length...");
+        for (int i = 1; i <= 5; i++) {
+            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_MAX_LENGTH_NAME, "Message From delay_queue_max_length");
         }
     }
 }
