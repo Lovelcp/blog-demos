@@ -37,38 +37,61 @@ public class QueueConfig {
     final static String DELAY_QUEUE_MAX_LENGTH_NAME = "delay_queue_max_length";
 
     /**
-     * message失效后进入到的队列
+     * message失效后进入的队列，也就是实际的消费队列
      */
     final static String DELAY_PROCESS_QUEUE_NAME = "delay_process_queue";
 
+    /**
+     * DLX
+     */
     final static String DELAY_EXCHANGE_NAME = "delay_exchange";
 
+    /**
+     * 创建DLX
+     *
+     * @return
+     */
     @Bean
     DirectExchange delayExchange() {
         return new DirectExchange(DELAY_EXCHANGE_NAME);
     }
 
+    /**
+     * 创建delay_queue_per_message队列
+     *
+     * @return
+     */
     @Bean
     Queue delayQueuePerMessage() {
         return QueueBuilder.durable(DELAY_QUEUE_PER_MESSAGE_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
+                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX，dead letter发送到的exchange
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .build();
     }
 
+    /**
+     * 创建delay_queue_per_queue队列
+     *
+     * @return
+     */
     @Bean
     Queue delayQueuePerQueue() {
         return QueueBuilder.durable(DELAY_QUEUE_PER_QUEUE_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
+                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
-                           .withArgument("x-message-ttl", QUEUE_EXPIRATION)
+                           .withArgument("x-message-ttl", QUEUE_EXPIRATION) // 设置队列的过期时间
                            .build();
     }
 
+    /**
+     * 创建delay_queue_reject队列
+     *
+     * @return
+     */
     @Bean
     Queue delayQueueReject() {
         return QueueBuilder.durable(DELAY_QUEUE_REJECT_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
+                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .build();
     }
@@ -76,18 +99,30 @@ public class QueueConfig {
     @Bean
     Queue delayQueueMaxLength() {
         return QueueBuilder.durable(DELAY_QUEUE_MAX_LENGTH_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // dead letter发送到的exchange
+                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .withArgument("x-max-length", 3)
                            .build();
     }
 
+    /**
+     * 创建delay_process_queue队列，也就是实际消费队列
+     *
+     * @return
+     */
     @Bean
     Queue delayProcessQueue() {
         return QueueBuilder.durable(DELAY_PROCESS_QUEUE_NAME)
                            .build();
     }
 
+    /**
+     * 将DLX绑定到实际消费队列
+     *
+     * @param delayProcessQueue
+     * @param delayExchange
+     * @return
+     */
     @Bean
     Binding binding(Queue delayProcessQueue, DirectExchange delayExchange) {
         return BindingBuilder.bind(delayProcessQueue)
@@ -96,7 +131,7 @@ public class QueueConfig {
     }
 
     /**
-     * Listener即消费者
+     * 定义delay_process_queue队列的Listener Container
      *
      * @param connectionFactory
      * @param processListenerAdapter
@@ -111,6 +146,13 @@ public class QueueConfig {
         return container;
     }
 
+    /**
+     * 定义delay_queue_reject队列的Listener Container
+     *
+     * @param connectionFactory
+     * @param rejectListenerAdapter
+     * @return
+     */
     @Bean
     SimpleMessageListenerContainer rejectContainer(ConnectionFactory connectionFactory, MessageListenerAdapter rejectListenerAdapter) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
