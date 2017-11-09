@@ -17,13 +17,13 @@ public class QueueConfig {
      * 发送到该队列的message会在一段时间后过期进入到delay_process_queue
      * 每个message可以控制自己的失效时间
      */
-    final static String DELAY_QUEUE_PER_MESSAGE_NAME = "delay_queue_per_message";
+    final static String DELAY_QUEUE_PER_MESSAGE_TTL_NAME = "delay_queue_per_message_ttl";
 
     /**
      * 发送到该队列的message会在一段时间后过期进入到delay_process_queue
      * 队列里所有的message都有统一的失效时间
      */
-    final static String DELAY_QUEUE_PER_QUEUE_NAME = "delay_queue_per_queue";
+    final static String DELAY_QUEUE_PER_QUEUE_TTL_NAME = "delay_queue_per_queue_ttl";
     final static int QUEUE_EXPIRATION = 4000;
 
     /**
@@ -57,26 +57,26 @@ public class QueueConfig {
     }
 
     /**
-     * 创建delay_queue_per_message队列
+     * 创建delay_queue_per_message_ttl队列
      *
      * @return
      */
     @Bean
-    Queue delayQueuePerMessage() {
-        return QueueBuilder.durable(DELAY_QUEUE_PER_MESSAGE_NAME)
+    Queue delayQueuePerMessageTTL() {
+        return QueueBuilder.durable(DELAY_QUEUE_PER_MESSAGE_TTL_NAME)
                            .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX，dead letter发送到的exchange
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .build();
     }
 
     /**
-     * 创建delay_queue_per_queue队列
+     * 创建delay_queue_per_queue_ttl队列
      *
      * @return
      */
     @Bean
-    Queue delayQueuePerQueue() {
-        return QueueBuilder.durable(DELAY_QUEUE_PER_QUEUE_NAME)
+    Queue delayQueuePerQueueTTL() {
+        return QueueBuilder.durable(DELAY_QUEUE_PER_QUEUE_TTL_NAME)
                            .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .withArgument("x-message-ttl", QUEUE_EXPIRATION) // 设置队列的过期时间

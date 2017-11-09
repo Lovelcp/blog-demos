@@ -17,22 +17,22 @@ public class SpringBootRabbitmqDLXApplicationTests {
     private RabbitTemplate rabbitTemplate;
 
     @Test
-    public void testDelayQueuePerMessage() throws InterruptedException {
+    public void testDelayQueuePerMessageTTL() throws InterruptedException {
         ProcessReceiver.latch = new CountDownLatch(3);
         for (int i = 1; i <= 3; i++) {
             int expiration = i * 1000;
-            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_MESSAGE_NAME,
-                    (Object) ("Message From delay_queue_per_message with expiration " + expiration), new ExpirationMessagePostProcessor(expiration));
+            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_MESSAGE_TTL_NAME,
+                    (Object) ("Message From delay_queue_per_message_ttl with expiration " + expiration), new ExpirationMessagePostProcessor(expiration));
         }
         ProcessReceiver.latch.await();
     }
 
     @Test
-    public void testDelayQueuePerQueue() throws InterruptedException {
+    public void testDelayQueuePerQueueTTL() throws InterruptedException {
         ProcessReceiver.latch = new CountDownLatch(3);
         for (int i = 1; i <= 3; i++) {
-            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_QUEUE_NAME,
-                    ("Message From delay_queue_per_queue with expiration " + QueueConfig.QUEUE_EXPIRATION));
+            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_QUEUE_TTL_NAME,
+                    ("Message From delay_queue_per_queue_ttl with expiration " + QueueConfig.QUEUE_EXPIRATION));
         }
         ProcessReceiver.latch.await();
     }

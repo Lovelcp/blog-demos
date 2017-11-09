@@ -13,28 +13,19 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class QueueConfig {
+
     /**
      * 发送到该队列的message会在一段时间后过期进入到delay_process_queue
      * 每个message可以控制自己的失效时间
      */
-    final static String DELAY_QUEUE_PER_MESSAGE_NAME = "delay_queue_per_message";
+    final static String DELAY_QUEUE_PER_MESSAGE_TTL_NAME = "delay_queue_per_message_ttl";
 
     /**
      * 发送到该队列的message会在一段时间后过期进入到delay_process_queue
      * 队列里所有的message都有统一的失效时间
      */
-    final static String DELAY_QUEUE_PER_QUEUE_NAME = "delay_queue_per_queue";
+    final static String DELAY_QUEUE_PER_QUEUE_TTL_NAME = "delay_queue_per_queue_ttl";
     final static int QUEUE_EXPIRATION = 4000;
-
-    /**
-     * 发送到该队列的message会被consumer拒绝，且不会被requeue，因为requeue被设置为false。被拒绝后会进入delay_process_queue
-     */
-    final static String DELAY_QUEUE_REJECT_NAME = "delay_queue_reject";
-
-    /**
-     * 发送到该队列的message个数超过队列的最大长度之后，新的message会进入到delay_process_queue
-     */
-    final static String DELAY_QUEUE_MAX_LENGTH_NAME = "delay_queue_max_length";
 
     /**
      * message失效后进入的队列，也就是实际的消费队列
@@ -47,7 +38,12 @@ public class QueueConfig {
     final static String DELAY_EXCHANGE_NAME = "delay_exchange";
 
     /**
-     * 创建DLX
+     * 路由到delay_queue_per_queue_ttl的exchange
+     */
+    final static String PER_QUEUE_TTL_EXCHANGE_NAME = "per_queue_ttl_exchange";
+
+    /**
+     * 创建DLX exchange
      *
      * @return
      */
@@ -57,51 +53,39 @@ public class QueueConfig {
     }
 
     /**
-     * 创建delay_queue_per_message队列
+     * 创建per_queue_ttl_exchange
      *
      * @return
      */
     @Bean
-    Queue delayQueuePerMessage() {
-        return QueueBuilder.durable(DELAY_QUEUE_PER_MESSAGE_NAME)
+    DirectExchange perQueueTTLExchange() {
+        return new DirectExchange(PER_QUEUE_TTL_EXCHANGE_NAME);
+    }
+
+    /**
+     * 创建delay_queue_per_message_ttl队列
+     *
+     * @return
+     */
+    @Bean
+    Queue delayQueuePerMessageTTL() {
+        return QueueBuilder.durable(DELAY_QUEUE_PER_MESSAGE_TTL_NAME)
                            .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX，dead letter发送到的exchange
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .build();
     }
 
     /**
-     * 创建delay_queue_per_queue队列
+     * 创建delay_queue_per_queue_ttl队列
      *
      * @return
      */
     @Bean
-    Queue delayQueuePerQueue() {
-        return QueueBuilder.durable(DELAY_QUEUE_PER_QUEUE_NAME)
+    Queue delayQueuePerQueueTTL() {
+        return QueueBuilder.durable(DELAY_QUEUE_PER_QUEUE_TTL_NAME)
                            .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
                            .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
                            .withArgument("x-message-ttl", QUEUE_EXPIRATION) // 设置队列的过期时间
-                           .build();
-    }
-
-    /**
-     * 创建delay_queue_reject队列
-     *
-     * @return
-     */
-    @Bean
-    Queue delayQueueReject() {
-        return QueueBuilder.durable(DELAY_QUEUE_REJECT_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
-                           .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
-                           .build();
-    }
-
-    @Bean
-    Queue delayQueueMaxLength() {
-        return QueueBuilder.durable(DELAY_QUEUE_MAX_LENGTH_NAME)
-                           .withArgument("x-dead-letter-exchange", DELAY_EXCHANGE_NAME) // DLX
-                           .withArgument("x-dead-letter-routing-key", DELAY_PROCESS_QUEUE_NAME) // dead letter携带的routing key
-                           .withArgument("x-max-length", 3)
                            .build();
     }
 
@@ -124,52 +108,38 @@ public class QueueConfig {
      * @return
      */
     @Bean
-    Binding binding(Queue delayProcessQueue, DirectExchange delayExchange) {
+    Binding dlxBinding(Queue delayProcessQueue, DirectExchange delayExchange) {
         return BindingBuilder.bind(delayProcessQueue)
                              .to(delayExchange)
                              .with(DELAY_PROCESS_QUEUE_NAME);
     }
 
     /**
-     * 定义delay_process_queue队列的Listener Container
+     * 将per_queue_ttl_exchange绑定到delay_queue_per_queue_ttl队列
      *
-     * @param connectionFactory
-     * @param processListenerAdapter
+     * @param delayQueuePerQueueTTL
+     * @param perQueueTTLExchange
      * @return
      */
     @Bean
-    SimpleMessageListenerContainer processContainer(ConnectionFactory connectionFactory, MessageListenerAdapter processListenerAdapter) {
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(DELAY_PROCESS_QUEUE_NAME); // 监听delay_process_queue
-        container.setMessageListener(processListenerAdapter);
-        return container;
+    Binding queueTTLBinding(Queue delayQueuePerQueueTTL, DirectExchange perQueueTTLExchange) {
+        return BindingBuilder.bind(delayQueuePerQueueTTL)
+                             .to(perQueueTTLExchange)
+                             .with(DELAY_QUEUE_PER_QUEUE_TTL_NAME);
     }
 
     /**
-     * 定义delay_queue_reject队列的Listener Container
+     * 定义delay_process_queue队列的Listener Container
      *
      * @param connectionFactory
-     * @param rejectListenerAdapter
      * @return
      */
     @Bean
-    SimpleMessageListenerContainer rejectContainer(ConnectionFactory connectionFactory, MessageListenerAdapter rejectListenerAdapter) {
+    SimpleMessageListenerContainer processContainer(ConnectionFactory connectionFactory, ProcessReceiver processReceiver) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(DELAY_QUEUE_REJECT_NAME); // 监听delay_queue_reject
-        container.setMessageListener(rejectListenerAdapter);
-        container.setDefaultRequeueRejected(false); // 关键!
+        container.setQueueNames(DELAY_PROCESS_QUEUE_NAME); // 监听delay_process_queue
+        container.setMessageListener(new MessageListenerAdapter(processReceiver));
         return container;
-    }
-
-    @Bean
-    MessageListenerAdapter processListenerAdapter(ProcessReceiver processReceiver) {
-        return new MessageListenerAdapter(processReceiver, "processMessage");
-    }
-
-    @Bean
-    MessageListenerAdapter rejectListenerAdapter(RejectReceiver rejectReceiver) {
-        return new MessageListenerAdapter(rejectReceiver, "rejectMessage");
     }
 }
