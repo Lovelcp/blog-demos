@@ -20,7 +20,7 @@ public class SpringBootRabbitmqDelayQueueApplicationTests {
     public void testDelayQueuePerMessageTTL() throws InterruptedException {
         ProcessReceiver.latch = new CountDownLatch(3);
         for (int i = 1; i <= 3; i++) {
-            int expiration = i * 1000;
+            long expiration = i * 1000;
             rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_MESSAGE_TTL_NAME,
                     (Object) ("Message From delay_queue_per_message_ttl with expiration " + expiration), new ExpirationMessagePostProcessor(expiration));
         }
