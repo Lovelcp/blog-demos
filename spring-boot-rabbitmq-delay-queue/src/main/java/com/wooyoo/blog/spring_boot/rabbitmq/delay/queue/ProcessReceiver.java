@@ -1,6 +1,8 @@
 package com.wooyoo.blog.spring_boot.rabbitmq.delay.queue;
 
 import com.rabbitmq.client.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 @Component
 public class ProcessReceiver implements ChannelAwareMessageListener {
     public static CountDownLatch latch;
+    private static Logger logger = LoggerFactory.getLogger(ProcessReceiver.class);
 
     public static final String FAIL_MESSAGE = "This message will fail";
 
@@ -38,7 +41,7 @@ public class ProcessReceiver implements ChannelAwareMessageListener {
      */
     public void processMessage(Message message) throws Exception {
         String realMessage = new String(message.getBody());
-        System.out.println("Received <" + realMessage + ">");
+        logger.info("Received <" + realMessage + ">");
         if (Objects.equals(realMessage, FAIL_MESSAGE)) {
             throw new Exception("Some exception happened");
         }

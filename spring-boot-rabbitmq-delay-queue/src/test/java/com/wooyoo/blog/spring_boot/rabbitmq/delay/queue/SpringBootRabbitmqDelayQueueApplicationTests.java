@@ -41,7 +41,7 @@ public class SpringBootRabbitmqDelayQueueApplicationTests {
     public void testFailMessage() throws InterruptedException {
         ProcessReceiver.latch = new CountDownLatch(6);
         for (int i = 1; i <= 3; i++) {
-            rabbitTemplate.convertAndSend(QueueConfig.DELAY_QUEUE_PER_QUEUE_TTL_NAME, ProcessReceiver.FAIL_MESSAGE);
+            rabbitTemplate.convertAndSend(QueueConfig.DELAY_PROCESS_QUEUE_NAME, ProcessReceiver.FAIL_MESSAGE);
         }
         ProcessReceiver.latch.await();
     }
