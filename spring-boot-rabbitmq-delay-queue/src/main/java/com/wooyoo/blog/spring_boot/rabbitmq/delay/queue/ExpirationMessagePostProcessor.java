@@ -5,7 +5,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
 
 /**
- * 设置队列消息的失效时间
+ * 设置队列消息的过期时间
  */
 public class ExpirationMessagePostProcessor implements MessagePostProcessor {
     private final Integer ttl; // 毫秒
