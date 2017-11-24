@@ -1,8 +1,7 @@
 import java.io.IOException;
-import java.util.Collections;
 
-public class CommandLine {
-    public static void main(String[] args) throws IOException, InterruptedException, IOException {
+public class WrongDeleteCommandLine {
+    public static void main(String[] args) throws IOException, InterruptedException {
         // 设置命令行为raw模式，否则会自动解析方向键以及后退键，并且直到按下回车read方法才会返回
         String[] cmd = { "/bin/sh", "-c", "stty raw </dev/tty" };
         Runtime.getRuntime()
@@ -53,8 +52,7 @@ public class CommandLine {
                     }
                 }
                 System.out.print("\u001b[1000D"); // 将光标移动到最左侧
-                System.out.print("\u001b[0K"); // 清除光标所在行的全部内容
-                System.out.print(syntaxHighlight(input));
+                System.out.print(input);
                 System.out.print("\u001b[1000D"); // 再次将光标移动到最左侧
                 if (index > 0) {
                     System.out.print("\u001b[" + index + "C"); // 将光标移动到index处
@@ -62,20 +60,5 @@ public class CommandLine {
                 System.out.flush();
             }
         }
-    }
-
-    /**
-     * 将字符串trailing（尾端）空格用红色显示
-     *
-     * @param input
-     * @return
-     */
-    public static String syntaxHighlight(String input) {
-        int len = input.length();
-        char[] val = input.toCharArray();
-        while ((len > 0) && (val[len - 1] <= ' ')) {
-            len--;
-        }
-        return input.substring(0, len) + "\u001b[41m" + String.join("", Collections.nCopies(input.length() - len, " ")) + "\u001b[0m";
     }
 }
