@@ -21,5 +21,9 @@ public class PositionTest {
         Thread.sleep(2000);
         System.out.print("\u001b[u"); // 将光标恢复到刚才保存的位置，也就是数字8的位置
         Thread.sleep(2000);
+
+        // 测试光标的移动尤其是Position的设置的时候，可能会发现有些Terminal上代码运行正常，有些又可能无法正确执行
+        // 比如上面这段代码，在Intellij的Terminal中就无法正确执行最后的光标位置保存和恢复命令
+        // 所以遇到代码运行出现意外的时候，可以换个控制台试一下，说不定就好啦~
     }
 }
