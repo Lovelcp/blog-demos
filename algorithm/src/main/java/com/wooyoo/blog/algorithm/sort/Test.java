@@ -3,42 +3,67 @@ package com.wooyoo.blog.algorithm.sort;
 import java.util.Arrays;
 
 public class Test {
-    public static void main(String[] args) {
-        int[] arr = new int[] { 5, 10, 8, 3, 1, 7, 2, 2, 0, -1 };
-        new Test().test(arr, 0, arr.length - 1);
-        System.out.println(Arrays.toString(arr));
+    public static void mergeSort(int[] a){
+        int[] TR = new int[a.length];//用于存放归并结果
+
+        int k=1;//起始，子序列长度为1
+        while(k<a.length){
+            mergePass(a, TR, k, a.length);//将原先无序的数据两两归并入TR
+            k = 2*k;//子序列长度加倍
+            mergePass(TR, a, k, a.length);//将TR中已经两两归并的有序序列再归并回数组a
+            k = 2*k;//子序列长度加倍
+        }
     }
 
-    public void test(int[] arr, int left, int right) {
-        if (arr.length == 0) {
-            return;
+    public static void mergePass(int[] SR, int [] TR,int s,int len){
+
+        int i=0;
+        while (i < len-2*s+1) {//8
+            merge(SR,TR,i,i+s-1,i+2*s-1);//两两归并
+            i=i+2*s;
         }
 
-        int oldLeft = left;
-        int oldRight = right;
-
-        if (left >= right) {
-            return;
-        }
-
-        int pivot = arr[left];
-
-        while (left < right) {
-            while (left < right && arr[right] >= pivot) {
-                right--;
+        //处理最后的尾数
+        //i=8
+        if(i< len-s+1){//9
+            merge(SR, TR, i, i+s-1, len-1);//归并最后两个序列
+        }else {
+            for (int j = i; j < len; j++) {//若最后只剩下单个子序列
+                TR[j] = SR[j];
             }
-            arr[left] = arr[right];
+        }
+    }
 
-            while (left < right && arr[left] <= pivot) {
-                left++;
+    public static void merge(int[] SR,int[] TR,int i,int m,int n){
+        int j,k,l;
+
+        //i(0~4) j(5~8)
+        for(j=m+1,k=i; i<=m && j<=n; k++){
+
+            if(SR[i]<SR[j]){
+                TR[k] = SR[i++];
+            }else{
+                TR[k] = SR[j++];
             }
-            arr[right] = arr[left];
         }
 
-        arr[left] = pivot;
-        System.out.println(Arrays.toString(arr));
 
-        test(arr, oldLeft, left - 1);
-        test(arr, left + 1, oldRight);
+        if(i<=m){
+            for (l = 0; l <= m-i ; l++) {
+                TR[k+l] = SR[i+l];
+            }
+        }
+
+        if(j<=n){
+            for (l = 0; l <= n-j; l++) {
+                TR[k+l] = SR[j+l];
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        int[] a = {1,2,3,5,4,1,6,9,8,7,10,20,45,32,28,44,31,55,43,23,21,23,21,33,21};
+        mergeSort(a);
+        System.out.println(Arrays.toString(a));
     }
 }
