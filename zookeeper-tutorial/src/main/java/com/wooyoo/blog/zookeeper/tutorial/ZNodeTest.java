@@ -3,7 +3,9 @@ package com.wooyoo.blog.zookeeper.tutorial;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.zookeeper.CreateMode;
 
-public class ConnectionTest {
+import java.util.Random;
+
+public class ZNodeTest {
     public static void main(String[] args) {
         String zkServers = "localhost:2181";
         ZkClient zkClient = new ZkClient(zkServers, 10000, 10000);
@@ -32,5 +34,9 @@ public class ConnectionTest {
         // 获取刚才创建的User对象
         User userResult = zkClient.readData(nodePath);
         System.out.println(userResult.getName());
+
+        // 重写node的data
+        userResult.setId(new Random().nextInt());
+        zkClient.writeData(nodePath, userResult);
     }
 }
