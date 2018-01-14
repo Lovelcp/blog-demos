@@ -27,4 +27,5 @@ public class JacksonInjectTest {
 
         System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(bean));
     }
+
 }
