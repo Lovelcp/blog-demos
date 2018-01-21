@@ -27,7 +27,7 @@ public class JsonTypeInfoTest {
     }
 
     /**
-     * 反序列化的时候需要默认构造函数，否则会有问题
+     * 反序列化的时候默认需要默认构造函数，否则会有问题
      *
      * @throws IOException
      */
